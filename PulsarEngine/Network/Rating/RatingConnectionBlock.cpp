@@ -4,6 +4,9 @@
 #include <Network/Rating/RatingSync.hpp>
 #include <MarioKartWii/RKSYS/RKSYSMgr.hpp>
 
+#include <PulsarSystem.hpp>
+#include <Network/PortForwarding/PortForwarding.hpp>
+
 namespace Pulsar {
 namespace Network {
 
@@ -16,6 +19,9 @@ static void LoginCallbackAndQueueRating(DWC::Error error, int profileId, void *p
     RKSYS::Mgr *rksys = RKSYS::Mgr::sInstance;
     const u32 licenseId = rksys->curLicenseId;
     PointRating::StartLoginRatingDownload(profileId, licenseId);
+
+    // Set up automatic port forwarding in the backgroundafter DWC login
+    System::sInstance->taskThread->Request(&PortForwarding::Init, nullptr, 0);
 }
 
 void CheckVRAndLogin(wchar_t *miiName, int unk, void *callback, RKNet::Controller *self) {
