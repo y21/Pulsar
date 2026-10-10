@@ -99,8 +99,8 @@ bool SendMapRequest(s32 fd, u32 deviceIp, u16 internalPort, u16 externalPort, u3
     u8 version = response[kMapResponseVersionOff];
     u8 result = response[kMapResponseResultOff];
     u32 lifetime = ReadU32BE(response + kMapResponseLifetimeOff);
-    u16 externalPort = ReadU16BE(response + kMapResponseExternalPortOff);
-    OS::Report("[PCP] MAP response version: %d, result: %d, lifetime: %d, external port: %d\n", version, result, lifetime, externalPort);
+    u16 routerExternalPort = ReadU16BE(response + kMapResponseExternalPortOff);
+    OS::Report("[PCP] MAP response version: %d, result: %d, lifetime: %d, external port: %d\n", version, result, lifetime, routerExternalPort);
     if (version != kMapVersion) {
         OS::Report("[PCP] Unexpected MAP response version: %d\n", version);
         return false;
