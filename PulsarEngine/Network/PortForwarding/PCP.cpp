@@ -31,6 +31,7 @@ const s32 kMapProtocolUdp = 17;
 const s32 kMapLifetime = 360;  // TODO: change this to something bigger later!!!
 
 const u16 kPcpPort = 5351;
+const OS::Time kSocketTimeout = OS::GetTimerClock() * 5;
 
 void WriteU32BE(u8 *buffer, u32 value) {
     buffer[0] = (value >> 24) & 0xFF;
@@ -86,6 +87,17 @@ bool SendMapRequest(s32 fd, u32 deviceIp, u16 internalPort, u16 externalPort, u3
     OS::Report("[PCP] Sent MAP request, bytes written: %d\n", written);
     if (written != sizeof(request)) {
         OS::Report("[PCP] Failed to send complete MAP request\n");
+        return false;
+    }
+
+    SO::PollFD pollFd = {.fd = fd, .events = SO::POLLIN, .revents = 0};
+
+    OS::Report("[PCP DEBUG] Polling with timeout %lld\n", (s64)(kSocketTimeout));
+    int readyFds = SO::SOPoll(&pollFd, 1, kSocketTimeout);
+    OS::Report("[PCP DEBUG] Ready FDs: %d\n", readyFds);
+
+    if (readyFds <= 0) {
+        OS::Report("[PCP] MAP request timed out or an error occurred (%d)\n", readyFds);
         return false;
     }
 

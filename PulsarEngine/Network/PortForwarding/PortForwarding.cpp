@@ -9,6 +9,7 @@ namespace Network {
 namespace PortForwarding {
 
 extern "C" bool SCGetProductSN(u32 *);
+
 void Init(void *param) {
     u32 sn;
     if (!SCGetProductSN(&sn)) {

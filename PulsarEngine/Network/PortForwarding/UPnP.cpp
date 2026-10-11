@@ -21,6 +21,8 @@ const char kSsdpMessage[] =
   "MX: 2\r\n"
   "ST: urn:schemas-upnp-org:device:InternetGatewayDevice:1\r\n\r\n";
 
+const OS::Time kSocketTimeout = OS::GetTimerClock() * 5;
+
 bool ParseSsdpResponse(const char *buf, u32 bufSize, Device &device) {
     const char *kLocationHeader = "Location:";
     const char *locationStart = strstr(buf, kLocationHeader);
@@ -100,16 +102,26 @@ bool ParseSsdpResponse(const char *buf, u32 bufSize, Device &device) {
 bool FindDevice(s32 sockfd, Device &device) {
     memset(&device, 0, sizeof(Device));
 
-    s32 written = SO::SOSendTo(sockfd, kSsdpMessage, sizeof(kSsdpMessage), 0, &kSsdpAddr);
-    OS::Report("[UDP DEBUG] Sent %d bytes (expect: %d)\n", written, sizeof(kSsdpMessage));
+    s32 written = SO::SOSendTo(sockfd, kSsdpMessage, sizeof(kSsdpMessage) - 1, 0, &kSsdpAddr);
+    OS::Report("[UDP DEBUG] Sent %d bytes (expect: %d)\n", written, sizeof(kSsdpMessage) - 1);
     if (written < 0) {
         OS::Report("[UPnP] Failed to send SSDP message\n");
         return false;
     }
 
+    SO::PollFD pollFd = {.fd = sockfd, .events = SO::POLLIN, .revents = 0};
+
+    OS::Report("[UPnP DEBUG] Polling with timeout %lld\n", (s64)(kSocketTimeout));
+    int readyFds = SO::SOPoll(&pollFd, 1, kSocketTimeout);
+    OS::Report("[UPnP DEBUG] Ready FDs: %d\n", readyFds);
+
+    if (readyFds <= 0) {
+        OS::Report("[UPnP] SSDP request timed out or an error occurred (%d)\n", readyFds);
+        return false;
+    }
+
     char buf[1024];
     s32 read = SO::SORecvFrom(sockfd, buf, sizeof(buf), 0, nullptr);
-    // TODO: must be polling since this could block indefinitely if no upnp support!!!
     // TODO: think about what to do if we get multiple responses? try parsing each one until a valid device is found?
     OS::Report("[UDP DEBUG] Received %d bytes\n", read);
     if (read < 0) {
