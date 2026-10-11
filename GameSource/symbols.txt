@@ -2661,3 +2661,11 @@ Update__Q24Kart6KillerFv = 0x8059bc44
 
 AssignTeams__Q25Pages11VSTeamsViewFv = 0x8084ffc8
 IsMultiplayer__Q25Pages4MenuFv = 0x808388b4
+
+#SO
+SOSocket = 0x801ecff4
+SOClose = 0x801ed0e4
+SORecvFrom = 0x801ed454
+SOSendTo = 0x801ed4a0
+SOGetHostID = 0x801ede88
+SOPoll = 0x801ed6d0
